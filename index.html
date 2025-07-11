@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROBOCON2025机器人篮球</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: right;
+            color: #666;
+            margin-bottom: 20px;
+            margin: -15px 15% 20px 0; /* 上 右 下 左 */
+            font-style: italic;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            align-items: flex-end;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 36px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .highlight {
+            background-color: #ffff99;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        .round-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .round-btn {
+            padding: 8px 20px;
+            margin: 0 5px;
+            background-color: #e7e7e7;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .round-btn.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>ROBOCON2025机器人篮球</h1>
+    
+    <div class="subtitle">——祝大家旗开得胜,不留一丝遗憾  (by 游任有鱼)</div>	
+    
+    <div class="round-toggle">
+        <button id="trial1-btn" class="round-btn active">试运行第一轮</button>
+        <button id="trial2-btn" class="round-btn">试运行第二轮</button>
+        <button id="prelim1-btn" class="round-btn">预选赛第一轮</button>
+        <button id="prelim2-btn" class="round-btn">预选赛第二轮</button>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="team-id">参赛队编号:</label>
+            <input type="text" id="team-id" placeholder="例如: B01">
+        </div>
+        
+        <button id="filter-btn">筛选</button>
+        <button id="reset-btn">重置</button>
+    </div>
+    
+    <div id="table-container">
+        <table id="schedule-table">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>1号场地</th>
+										<th>1号场地</th>
+                    <th>2号场地</th>
+										<th>2号场地</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>红半场</th>
+                    <th>蓝半场</th>
+                    <th>红半场</th>
+                    <th>蓝半场</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- 数据将通过JavaScript动态加载 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 试运行第一轮比赛数据（按照图片内容）
+// 试运行第一轮比赛数据（已替换为学校全名）
+const trial1Data = [
+    { time: "(12日)8:00—8:16", venue1Red: "青岛理工大学", venue1Blue: "同济大学", venue2Red: "北京交通大学", venue2Blue: "大连工业大学" },
+    { time: "(12日)8:16—8:32", venue1Red: "河北工程大学", venue1Blue: "西安交通大学", venue2Red: "南京理工大学", venue2Blue: "西华大学" },
+    { time: "(12日)8:32—8:48", venue1Red: "山东理工大学", venue1Blue: "湖南农业大学", venue2Red: "西华师范大学", venue2Blue: "河北科技大学" },
+    { time: "(12日)8:48—9:04", venue1Red: "北京科技大学", venue1Blue: "华东理工大学", venue2Red: "东北大学", venue2Blue: "沈阳工业大学" },
+    { time: "(12日)9:04—9:20", venue1Red: "河北工业大学", venue1Blue: "山东科技大学1队", venue2Red: "山东科技大学2队", venue2Blue: "山东交通学院" },
+    { time: "(12日)9:20—9:36", venue1Red: "陕西科技大学", venue1Blue: "北京航空航天大学", venue2Red: "东北大学秦皇岛分校", venue2Blue: "哈尔滨工业大学" },
+    { time: "(12日)9:36—9:52", venue1Red: "华中科技大学", venue1Blue: "宁波工程学院", venue2Red: "南昌大学", venue2Blue: "山东航空学院" },
+    { time: "(12日)9:52—10:08", venue1Red: "江苏第二师范学院", venue1Blue: "南通理工学院", venue2Red: "沈阳城市建设学院", venue2Blue: "中南大学" },
+    { time: "(12日)10:08—10:24", venue1Red: "湖北工业大学", venue1Blue: "西安文理学院", venue2Red: "中国石油大学（北京）", venue2Blue: "太原工业学院" },
+    { time: "(12日)10:24—10:40", venue1Red: "厦门大学", venue1Blue: "枣庄学院", venue2Red: "武汉大学", venue2Blue: "福建理工大学" },
+    { time: "(12日)10:40—10:56", venue1Red: "武汉科技大学1队", venue1Blue: "上海工程技术大学", venue2Red: "武汉科技大学2队", venue2Blue: "哈尔滨工程大学" },
+    { time: "(12日)10:56—11:12", venue1Red: "沈阳建筑大学", venue1Blue: "北京邮电大学2队", venue2Red: "新疆大学", venue2Blue: "潍坊科技学院" },
+    { time: "(12日)11:12—11:28", venue1Red: "温州大学", venue1Blue: "临沂大学", venue2Red: "北京邮电大学1队", venue2Blue: "太原理工大学" },
+    { time: "(12日)11:28—11:44", venue1Red: "常州工学院", venue1Blue: "江苏理工学院", venue2Red: "中北大学", venue2Blue: "中国石油大学(北京)克拉玛依校区" }
+];
+
+// 试运行第二轮比赛数据（已替换为学校全名）
+const trial2Data = [
+    { time: "(12日)11:44—12:00", venue1Red: "北京交通大学", venue1Blue: "大连工业大学", venue2Red: "青岛理工大学", venue2Blue: "同济大学" },
+    { time: "(12日)12:00—12:16", venue1Red: "南京理工大学", venue1Blue: "西华大学", venue2Red: "河北工程大学", venue2Blue: "西安交通大学" },
+    { time: "(12日)12:16—12:32", venue1Red: "西华师范大学", venue1Blue: "河北科技大学", venue2Red: "山东理工大学", venue2Blue: "湖南农业大学" },
+    { time: "(12日)13:30—13:46", venue1Red: "东北大学", venue1Blue: "沈阳工业大学", venue2Red: "北京科技大学", venue2Blue: "华东理工大学" },
+    { time: "(12日)13:46—14:02", venue1Red: "山东科技大学2队", venue1Blue: "山东交通学院", venue2Red: "河北工业大学", venue2Blue: "山东科技大学1队" },
+    { time: "(12日)14:02—14:18", venue1Red: "东北大学秦皇岛分校", venue1Blue: "哈尔滨工业大学", venue2Red: "陕西科技大学", venue2Blue: "北京航空航天大学" },
+    { time: "(12日)14:18—14:34", venue1Red: "南昌大学", venue1Blue: "山东航空学院", venue2Red: "华中科技大学", venue2Blue: "宁波工程学院" },
+    { time: "(12日)13:34—14:50", venue1Red: "沈阳城市建设学院", venue1Blue: "中南大学", venue2Red: "江苏第二师范学院", venue2Blue: "南通理工学院" },
+    { time: "(12日)14:50—15:06", venue1Red: "中国石油大学（北京）", venue1Blue: "太原工业学院", venue2Red: "湖北工业大学", venue2Blue: "西安文理学院" },
+    { time: "(12日)15:06—15:22", venue1Red: "武汉大学", venue1Blue: "福建理工大学", venue2Red: "厦门大学", venue2Blue: "枣庄学院" },
+    { time: "(12日)15:22—15:38", venue1Red: "武汉科技大学2队", venue1Blue: "哈尔滨工程大学", venue2Red: "武汉科技大学1队", venue2Blue: "上海工程技术大学" },
+    { time: "(12日)15:38—15:54", venue1Red: "新疆大学", venue1Blue: "潍坊科技学院", venue2Red: "沈阳建筑大学", venue2Blue: "北京邮电大学2队" },
+    { time: "(12日)15:54—16:10", venue1Red: "北京邮电大学1队", venue1Blue: "太原理工大学", venue2Red: "温州大学", venue2Blue: "临沂大学" },
+    { time: "(12日)16:10—16:26", venue1Red: "中北大学", venue1Blue: "中国石油大学(北京)克拉玛依校区", venue2Red: "常州工学院", venue2Blue: "江苏理工学院" }
+];
+
+// 预选赛第一轮数据（已替换为学校全名）
+const prelim1Data = [
+    { time: "(12日)17:00—17:07", venue1Red: "青岛理工大学", venue1Blue: "同济大学", venue2Red: "北京交通大学", venue2Blue: "大连工业大学" },
+    { time: "(12日)17:07—17:14", venue1Red: "河北工程大学", venue1Blue: "西安交通大学", venue2Red: "南京理工大学", venue2Blue: "西华大学" },
+    { time: "(12日)17:14—17:21", venue1Red: "山东理工大学", venue1Blue: "湖南农业大学", venue2Red: "西华师范大学", venue2Blue: "河北科技大学" },
+    { time: "(12日)17:28—17:35", venue1Red: "北京科技大学", venue1Blue: "华东理工大学", venue2Red: "东北大学", venue2Blue: "沈阳工业大学" },
+    { time: "(12日)17:35—17:42", venue1Red: "河北工业大学", venue1Blue: "山东科技大学1队", venue2Red: "山东科技大学2队", venue2Blue: "山东交通学院" },
+    { time: "(12日)17:42—17:49", venue1Red: "陕西科技大学", venue1Blue: "北京航空航天大学", venue2Red: "东北大学秦皇岛分校", venue2Blue: "哈尔滨工业大学" },
+    { time: "(12日)17:49—17:56", venue1Red: "华中科技大学", venue1Blue: "宁波工程学院", venue2Red: "南昌大学", venue2Blue: "山东航空学院" },
+    { time: "(12日)17:56—18:03", venue1Red: "江苏第二师范学院", venue1Blue: "南通理工学院", venue2Red: "沈阳城市建设学院", venue2Blue: "中南大学" },
+    { time: "(12日)18:03—18:10", venue1Red: "湖北工业大学", venue1Blue: "西安文理学院", venue2Red: "中国石油大学（北京）", venue2Blue: "太原工业学院" },
+    { time: "(12日)18:10—18:17", venue1Red: "厦门大学", venue1Blue: "枣庄学院", venue2Red: "武汉大学", venue2Blue: "福建理工大学" },
+    { time: "(12日)18:17—18:24", venue1Red: "武汉科技大学1队", venue1Blue: "上海工程技术大学", venue2Red: "武汉科技大学2队", venue2Blue: "哈尔滨工程大学" },
+    { time: "(12日)18:24—18:31", venue1Red: "沈阳建筑大学", venue1Blue: "北京邮电大学2队", venue2Red: "新疆大学", venue2Blue: "潍坊科技学院" },
+    { time: "(12日)18:31—18:38", venue1Red: "温州大学", venue1Blue: "临沂大学", venue2Red: "北京邮电大学1队", venue2Blue: "太原理工大学" },
+    { time: "(12日)18:38—18:45", venue1Red: "常州工学院", venue1Blue: "江苏理工学院", venue2Red: "中北大学", venue2Blue: "中国石油大学(北京)克拉玛依校区" },
+    { time: "(12日)18:45—18:52", venue1Red: "北京交通大学", venue1Blue: "大连工业大学", venue2Red: "青岛理工大学", venue2Blue: "同济大学" },
+    { time: "(12日)18:52—18:59", venue1Red: "南京理工大学", venue1Blue: "西华大学", venue2Red: "河北工程大学", venue2Blue: "西安交通大学" },
+    { time: "(12日)18:59—19:06", venue1Red: "西华师范大学", venue1Blue: "河北科技大学", venue2Red: "山东理工大学", venue2Blue: "湖南农业大学" },
+    { time: "(13日)10:01—10:08", venue1Red: "东北大学", venue1Blue: "沈阳工业大学", venue2Red: "北京科技大学", venue2Blue: "华东理工大学" },
+    { time: "(13日)10:08—10:15", venue1Red: "山东科技大学2队", venue1Blue: "山东交通学院", venue2Red: "河北工业大学", venue2Blue: "山东科技大学1队" },
+    { time: "(13日)10:15—10:22", venue1Red: "东北大学秦皇岛分校", venue1Blue: "哈尔滨工业大学", venue2Red: "陕西科技大学", venue2Blue: "北京航空航天大学" },
+    { time: "(13日)10:22—10:29", venue1Red: "南昌大学", venue1Blue: "山东航空学院", venue2Red: "华中科技大学", venue2Blue: "宁波工程学院" },
+    { time: "(13日)10:29—10:36", venue1Red: "沈阳城市建设学院", venue1Blue: "中南大学", venue2Red: "江苏第二师范学院", venue2Blue: "南通理工学院" },
+    { time: "(13日)10:36—10:43", venue1Red: "中国石油大学（北京）", venue1Blue: "太原工业学院", venue2Red: "湖北工业大学", venue2Blue: "西安文理学院" },
+    { time: "(13日)10:43—10:50", venue1Red: "武汉大学", venue1Blue: "福建理工大学", venue2Red: "厦门大学", venue2Blue: "枣庄学院" },
+    { time: "(13日)10:50—10:57", venue1Red: "武汉科技大学2队", venue1Blue: "哈尔滨工程大学", venue2Red: "武汉科技大学1队", venue2Blue: "上海工程技术大学" },
+    { time: "(13日)10:57—11:04", venue1Red: "新疆大学", venue1Blue: "潍坊科技学院", venue2Red: "沈阳建筑大学", venue2Blue: "北京邮电大学2队" },
+    { time: "(13日)11:04—11:11", venue1Red: "北京邮电大学1队", venue1Blue: "太原理工大学", venue2Red: "温州大学", venue2Blue: "临沂大学" },
+    { time: "(13日)11:11—11:18", venue1Red: "中北大学", venue1Blue: "中国石油大学(北京)克拉玛依校区", venue2Red: "常州工学院", venue2Blue: "江苏理工学院" }
+];
+        
+// 预选赛第二轮数据（已替换为学校全名）
+const prelim2Data = [
+    { time: "(13日)11:25—11:32", venue1Red: "同济大学", venue1Blue: "青岛理工大学", venue2Red: "大连工业大学", venue2Blue: "北京交通大学" },
+    { time: "(13日)11:32—11:39", venue1Red: "西安交通大学", venue1Blue: "河北工程大学", venue2Red: "西华大学", venue2Blue: "南京理工大学" },
+    { time: "(13日)11:39—11:46", venue1Red: "湖南农业大学", venue1Blue: "山东理工大学", venue2Red: "河北科技大学", venue2Blue: "西华师范大学" },
+    { time: "(13日)11:46—11:53", venue1Red: "华东理工大学", venue1Blue: "北京科技大学", venue2Red: "沈阳工业大学", venue2Blue: "东北大学" },
+    { time: "(13日)11:53—12:00", venue1Red: "山东科技大学1队", venue1Blue: "河北工业大学", venue2Red: "山东交通学院", venue2Blue: "山东科技大学2队" },
+    { time: "(13日)12:00—12:07", venue1Red: "北京航空航天大学", venue1Blue: "陕西科技大学", venue2Red: "哈尔滨工业大学", venue2Blue: "东北大学秦皇岛分校" },
+    { time: "(13日)12:07—12:14", venue1Red: "宁波工程学院", venue1Blue: "华中科技大学", venue2Red: "山东航空学院", venue2Blue: "南昌大学" },
+    { time: "(13日)12:14—12:21", venue1Red: "南通理工学院", venue1Blue: "江苏第二师范学院", venue2Red: "中南大学", venue2Blue: "沈阳城市建设学院" },
+    { time: "(13日)12:21—12:28", venue1Red: "西安文理学院", venue1Blue: "湖北工业大学", venue2Red: "太原工业学院", venue2Blue: "中国石油大学（北京）" },
+    { time: "(13日)13:30—13:38", venue1Red: "枣庄学院", venue1Blue: "厦门大学", venue2Red: "福建理工大学", venue2Blue: "武汉大学" },
+    { time: "(13日)13:38—13:45", venue1Red: "上海工程技术大学", venue1Blue: "武汉科技大学1队", venue2Red: "哈尔滨工程大学", venue2Blue: "武汉科技大学2队" },
+    { time: "(13日)13:45—13:52", venue1Red: "北京邮电大学2队", venue1Blue: "沈阳建筑大学", venue2Red: "潍坊科技学院", venue2Blue: "新疆大学" },
+    { time: "(13日)13:52—13:59", venue1Red: "临沂大学", venue1Blue: "温州大学", venue2Red: "太原理工大学", venue2Blue: "北京邮电大学1队" },
+    { time: "(13日)13:59—14:06", venue1Red: "江苏理工学院", venue1Blue: "常州工学院", venue2Red: "中国石油大学(北京)克拉玛依校区", venue2Blue: "中北大学" },
+    { time: "(13日)14:06—14:13", venue1Red: "大连工业大学", venue1Blue: "北京交通大学", venue2Red: "同济大学", venue2Blue: "青岛理工大学" },
+    { time: "(13日)14:13—14:20", venue1Red: "西华大学", venue1Blue: "南京理工大学", venue2Red: "西安交通大学", venue2Blue: "河北工程大学" },
+    { time: "(13日)14:20—14:27", venue1Red: "河北科技大学", venue1Blue: "西华师范大学", venue2Red: "湖南农业大学", venue2Blue: "山东理工大学" },
+    { time: "(13日)14:27—14:34", venue1Red: "沈阳工业大学", venue1Blue: "东北大学", venue2Red: "华东理工大学", venue2Blue: "北京科技大学" },
+    { time: "(13日)14:34—14:41", venue1Red: "山东交通学院", venue1Blue: "山东科技大学2队", venue2Red: "山东科技大学1队", venue2Blue: "河北工业大学" },
+    { time: "(13日)14:41—14:48", venue1Red: "哈尔滨工业大学", venue1Blue: "东北大学秦皇岛分校", venue2Red: "北京航空航天大学", venue2Blue: "陕西科技大学" },
+    { time: "(13日)14:48—14:55", venue1Red: "山东航空学院", venue1Blue: "南昌大学", venue2Red: "宁波工程学院", venue2Blue: "华中科技大学" },
+    { time: "(13日)14:55—15:02", venue1Red: "中南大学", venue1Blue: "沈阳城市建设学院", venue2Red: "南通理工学院", venue2Blue: "江苏第二师范学院" },
+    { time: "(13日)15:02—15:09", venue1Red: "太原工业学院", venue1Blue: "中国石油大学（北京）", venue2Red: "西安文理学院", venue2Blue: "湖北工业大学" },
+    { time: "(13日)15:09—15:16", venue1Red: "福建理工大学", venue1Blue: "武汉大学", venue2Red: "枣庄学院", venue2Blue: "厦门大学" },
+    { time: "(13日)15:16—15:23", venue1Red: "哈尔滨工程大学", venue1Blue: "武汉科技大学2队", venue2Red: "上海工程技术大学", venue2Blue: "武汉科技大学1队" },
+    { time: "(13日)15:23—15:30", venue1Red: "潍坊科技学院", venue1Blue: "新疆大学", venue2Red: "北京邮电大学2队", venue2Blue: "沈阳建筑大学" },
+    { time: "(13日)15:30—15:37", venue1Red: "太原理工大学", venue1Blue: "北京邮电大学1队", venue2Red: "临沂大学", venue2Blue: "温州大学" },
+    { time: "(13日)15:37—15:44", venue1Red: "中国石油大学(北京)克拉玛依校区", venue1Blue: "中北大学", venue2Red: "江苏理工学院", venue2Blue: "常州工学院" }
+];
+
+        let currentRound = 'trial1'; // 'trial1','trial2','prelim1','prelim2'
+
+        // 获取当前轮次的数据
+        function getCurrentData() {
+            switch(currentRound) {
+                case 'trial1': return trial1Data;
+                case 'trial2': return trial2Data;
+                case 'prelim1': return prelim1Data;
+                case 'prelim2': return prelim2Data;
+                default: return trial1Data;
+            }
+        }
+
+        // 初始化表格
+        function renderTable(data = getCurrentData()) {
+        const tableBody = document.getElementById('table-body');
+        const tableHead = document.querySelector('#schedule-table thead');
+        tableBody.innerHTML = '';
+        
+        // 根据当前轮次设置表头
+        if (currentRound === 'prelim1' || currentRound === 'prelim2') {
+            tableHead.innerHTML = `
+                <tr>
+                    <th>时间</th>
+                    <th>1号场地</th>
+                    <th>1号场地</th>
+                    <th>2号场地</th>
+                    <th>2号场地</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>运（传）球赛</th>
+                    <th>投篮赛</th>
+                    <th>运（传）球赛</th>
+                    <th>投篮赛</th>
+                </tr>
+            `;
+        } else { // 试运行的表头
+            tableHead.innerHTML = `
+                <tr>
+                    <th>时间</th>
+                    <th>1号场地</th>
+                    <th>1号场地</th>
+                    <th>2号场地</th>
+                    <th>2号场地</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>红半场</th>
+                    <th>蓝半场</th>
+                    <th>红半场</th>
+                    <th>蓝半场</th>
+                </tr>
+            `;
+        }
+        
+        if (data.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="5" class="no-results">没有找到匹配的结果</td>`;
+            tableBody.appendChild(row);
+            return;
+        }
+        
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.time}</td>
+                <td>${item.venue1Red}</td>
+                <td>${item.venue1Blue}</td>
+                <td>${item.venue2Red}</td>
+                <td>${item.venue2Blue}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+        // 筛选函数
+        function filterData() {
+            const teamId = document.getElementById('team-id').value.trim().toUpperCase();
+            if (!teamId) {
+                renderTable();
+                return;
+            }
+            
+            const currentData = getCurrentData();
+            const filteredData = currentData.filter(item => 
+                item.venue1Red === teamId || 
+                item.venue1Blue === teamId || 
+                item.venue2Red === teamId || 
+                item.venue2Blue === teamId
+            );
+            
+            // 高亮显示匹配的队伍
+            renderTable(filteredData);
+            highlightTeam(teamId);
+        }
+
+        // 高亮显示特定队伍
+        function highlightTeam(teamId) {
+            const cells = document.querySelectorAll('#table-body td');
+            cells.forEach(cell => {
+                if (cell.textContent === teamId) {
+                    cell.classList.add('highlight');
+                }
+            });
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('team-id').value = '';
+            renderTable();
+        }
+
+        // 切换轮次
+        // 修改切换轮次函数
+    function switchRound(round) {
+        currentRound = round;
+        // 更新按钮状态
+        document.getElementById('trial1-btn').classList.toggle('active', round === 'trial1');
+        document.getElementById('trial2-btn').classList.toggle('active', round === 'trial2');
+        document.getElementById('prelim1-btn').classList.toggle('active', round === 'prelim1');
+        document.getElementById('prelim2-btn').classList.toggle('active', round === 'prelim2');
+        
+        // 重新渲染表格和表头
+        const teamId = document.getElementById('team-id').value.trim().toUpperCase();
+        if (teamId) {
+            filterData();
+        } else {
+            renderTable();
+        }
+    }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable();
+            
+            document.getElementById('filter-btn').addEventListener('click', filterData);
+            document.getElementById('reset-btn').addEventListener('click', resetFilters);
+            document.getElementById('trial1-btn').addEventListener('click', () => switchRound('trial1'));
+            document.getElementById('trial2-btn').addEventListener('click', () => switchRound('trial2'));
+            document.getElementById('prelim1-btn').addEventListener('click', () => switchRound('prelim1'));
+            document.getElementById('prelim2-btn').addEventListener('click', () => switchRound('prelim2'));
+            
+            // 按回车键也可以触发筛选
+            document.getElementById('team-id').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    filterData();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
