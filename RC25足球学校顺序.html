@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROBOCON2025仿生足式机器人</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: right;
+            color: #666;
+            margin-bottom: 20px;
+						margin: -15px 15% 20px 0; /* 上 右 下 左 */
+            font-style: italic;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            align-items: flex-end;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 36px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .highlight {
+            background-color: #ffff99;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        .round-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .round-btn {
+            padding: 8px 20px;
+            margin: 0 5px;
+            background-color: #e7e7e7;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .round-btn.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>ROBOCON2025仿生足式机器人</h1>
+		
+		<div class="subtitle">—— 祝大家旗开得胜,不留一丝遗憾 (by 游任有鱼)</div>	
+    
+    <div class="round-toggle">
+        <button id="trial-btn" class="round-btn active">试运行</button>
+        <button id="round1-btn" class="round-btn">第一轮</button>
+        <button id="round2-btn" class="round-btn">第二轮</button>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="team-id">参赛队编号:</label>
+            <input type="text" id="team-id" placeholder="例如: L001">
+        </div>
+        
+        <button id="filter-btn">筛选</button>
+        <button id="reset-btn">重置</button>
+    </div>
+    
+    <div id="table-container">
+        <table id="schedule-table">
+            <thead>
+                <tr>
+                    <th>场次</th>
+                    <th>时间</th>
+                    <th>竞速赛场地 1</th>
+                    <th>竞速赛场地 2</th>
+                    <th>障碍赛场地 1</th>
+                    <th>障碍赛场地 2</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- 数据将通过JavaScript动态加载 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 试运行比赛数据（按照图片内容）
+        const trialData = [
+    { session: 1, time: "(11日)9:00—9:08", venue1: "上海海洋大学", venue2: "太原工业学院2队", venue3: "沈阳工业大学1队", venue4: "山东石油化工学院" },
+    { session: 2, time: "(11日)9:09—9:17", venue1: "新疆大学2队", venue2: "新疆大学3队", venue3: "湖北第二师范学院3队", venue4: "浙大城市学院2队" },
+    { session: 3, time: "(11日)9:18—9:26", venue1: "太原理工大学1队", venue2: "上海电机学院", venue3: "中南大学", venue4: "南昌大学1队" },
+    { session: 4, time: "(11日)9:27—9:35", venue1: "北京科技大学1队", venue2: "长江大学", venue3: "潍坊科技学院", venue4: "石河子大学" },
+    { session: 5, time: "(11日)9:36—9:44", venue1: "呼伦贝尔学院2队", venue2: "太原工业学院3队", venue3: "湖北工业大学2队", venue4: "西安交通大学2队" },
+    { session: 6, time: "(11日)9:45—9:53", venue1: "北京交通大学2队", venue2: "北京交通大学1队", venue3: "中北大学2队", venue4: "浙大城市学院3队" },
+    { session: 7, time: "(11日)9:54—10:02", venue1: "晋中信息学院2队", venue2: "枣庄学院1队", venue3: "青岛理工大学", venue4: "上海大学1队" },
+    { session: 8, time: "(11日)10:03—10:11", venue1: "东北林业大学2队", venue2: "西安交通大学1队", venue3: "河北科技大学1队", venue4: "武汉轻工大学" },
+    { session: 9, time: "(11日)10:12—10:20", venue1: "北方工业大学2队", venue2: "武汉大学", venue3: "西安交通大学3队", venue4: "北京航空航天大学2队" },
+    { session: 10, time: "(11日)10:21—10:29", venue1: "呼伦贝尔学院1队", venue2: "北京科技大学3队", venue3: "浙大城市学院1队", venue4: "北京科技大学2队" },
+    { session: 11, time: "(11日)10:30—10:38", venue1: "太原工业学院1队", venue2: "湖北第二师范学院1队", venue3: "宁波工程学院2队", venue4: "哈尔滨工程大学" },
+    { session: 12, time: "(11日)10:39—10:47", venue1: "山东科技大学2队", venue2: "新疆理工学院", venue3: "中北大学1队", venue4: "武汉生物工程学院" },
+    { session: 13, time: "(11日)10:48—10:56", venue1: "苏州工学院1队", venue2: "湖北工业大学1队", venue3: "大连交通大学2队", venue4: "北华航天工业学院" },
+    { session: 14, time: "(11日)10:57—11:05", venue1: "西安文理学院", venue2: "南昌大学2队", venue3: "中北大学3队", venue4: "太原理工大学3队" },
+    { session: 15, time: "(11日)11:06—11:14", venue1: "大连工业大学2队", venue2: "苏州工学院2队", venue3: "武汉科技大学3队", venue4: "华中科技大学1队" },
+    { session: 16, time: "(11日)11:15—11:23", venue1: "北方工业大学1队", venue2: "沈阳化工大学", venue3: "宁波工程学院1队", venue4: "宁波工程学院3队" },
+    { session: 17, time: "(11日)11:24—11:32", venue1: "东北大学", venue2: "武汉科技大学2队", venue3: "山东交通学院2队", venue4: "河北工程大学" },
+    { session: 18, time: "(11日)11:33—11:41", venue1: "山东科技大学1队", venue2: "山东交通学院1队", venue3: "福建理工大学1队", venue4: "河北科技大学2队" },
+    { session: 19, time: "(11日)11:42—11:50", venue1: "哈尔滨工业大学", venue2: "太原理工大学2队", venue3: "北京航空航天大学1队", venue4: "合肥工业大学2队" },
+    { session: 20, time: "(11日)11:51—11:59", venue1: "东北大学秦皇岛分校1队", venue2: "合肥工业大学1队", venue3: "大连工业大学1队", venue4: "西安科技大学" },
+    { session: 21, time: "(11日)13:30—13:38", venue1: "上海大学2队", venue2: "北京交通大学3队", venue3: "燕山大学", venue4: "山东科技大学3队" },
+    { session: 22, time: "(11日)13:38—13:46", venue1: "枣庄学院2队", venue2: "晋中信息学院1队", venue3: "福建理工大学2队", venue4: "东北大学秦皇岛分校2队" },
+    { session: 23, time: "(11日)13:46—13:54", venue1: "沈阳工业大学3队", venue2: "武汉科技大学1队", venue3: "新疆大学1队", venue4: "太原工业学院2队" },
+    { session: 24, time: "(11日)13:54—14:02", venue1: "山东理工大学", venue2: "东北林业大学1队", venue3: "上海海洋大学", venue4: "新疆大学3队" },
+    { session: 25, time: "(11日)14:02—14:10", venue1: "沈阳工业大学2队", venue2: "湖北第二师范学院2队", venue3: "新疆大学2队", venue4: "上海电机学院" },
+    { session: 26, time: "(11日)14:10—14:18", venue1: "山东航空学院", venue2: "福建理工大学3队", venue3: "太原理工大学1队", venue4: "长江大学" },
+    { session: 27, time: "(11日)14:18—14:26", venue1: "大连交通大学3队", venue2: "大连交通大学1队", venue3: "北京科技大学1队", venue4: "太原工业学院3队" },
+    { session: 28, time: "(11日)14:26—14:34", venue1: "沈阳工业大学1队", venue2: "华中科技大学2队", venue3: "呼伦贝尔学院2队", venue4: "北京交通大学1队" },
+    { session: 29, time: "(11日)14:34—14:42", venue1: "湖北第二师范学院3队", venue2: "山东石油化工学院", venue3: "北京交通大学2队", venue4: "枣庄学院1队" },
+    { session: 30, time: "(11日)14:42—14:50", venue1: "中南大学", venue2: "浙大城市学院2队", venue3: "晋中信息学院2队", venue4: "西安交通大学1队" },
+    { session: 31, time: "(11日)14:50—14:58", venue1: "潍坊科技学院", venue2: "南昌大学1队", venue3: "东北林业大学2队", venue4: "武汉大学" },
+    { session: 32, time: "(11日)14:58—15:06", venue1: "湖北工业大学2队", venue2: "石河子大学", venue3: "北方工业大学2队", venue4: "北京科技大学3队" },
+    { session: 33, time: "(11日)15:06—15:14", venue1: "中北大学2队", venue2: "西安交通大学2队", venue3: "呼伦贝尔学院1队", venue4: "湖北第二师范学院1队" },
+    { session: 34, time: "(11日)15:14—15:22", venue1: "青岛理工大学", venue2: "浙大城市学院3队", venue3: "太原工业学院1队", venue4: "新疆理工学院" },
+    { session: 35, time: "(11日)15:22—15:30", venue1: "河北科技大学1队", venue2: "上海大学1队", venue3: "山东科技大学2队", venue4: "湖北工业大学1队" },
+    { session: 36, time: "(11日)15:30—15:38", venue1: "西安交通大学3队", venue2: "武汉轻工大学", venue3: "苏州工学院1队", venue4: "南昌大学2队" },
+    { session: 37, time: "(11日)15:38—15:46", venue1: "浙大城市学院1队", venue2: "北京航空航天大学2队", venue3: "西安文理学院", venue4: "苏州工学院2队" },
+    { session: 38, time: "(11日)15:46—15:54", venue1: "宁波工程学院2队", venue2: "北京科技大学2队", venue3: "大连工业大学2队", venue4: "沈阳化工大学" },
+    { session: 39, time: "(11日)15:54—16:02", venue1: "中北大学1队", venue2: "哈尔滨工程大学", venue3: "北方工业大学1队", venue4: "武汉科技大学2队" },
+    { session: 40, time: "(11日)16:02—16:10", venue1: "大连交通大学2队", venue2: "武汉生物工程学院", venue3: "东北大学", venue4: "山东交通学院1队" },
+    { session: 41, time: "(11日)16:10—16:18", venue1: "中北大学3队", venue2: "北华航天工业学院", venue3: "山东科技大学1队", venue4: "太原理工大学2队" },
+    { session: 42, time: "(11日)16:18—16:26", venue1: "武汉科技大学3队", venue2: "太原理工大学3队", venue3: "哈尔滨工业大学", venue4: "合肥工业大学1队" },
+    { session: 43, time: "(11日)16:26—16:34", venue1: "宁波工程学院1队", venue2: "华中科技大学1队", venue3: "东北大学秦皇岛分校1队", venue4: "北京交通大学3队" },
+    { session: 44, time: "(11日)16:34—16:42", venue1: "山东交通学院2队", venue2: "宁波工程学院3队", venue3: "上海大学2队", venue4: "晋中信息学院1队" },
+    { session: 45, time: "(11日)16:42—16:50", venue1: "福建理工大学1队", venue2: "河北工程大学", venue3: "枣庄学院2队", venue4: "武汉科技大学1队" },
+    { session: 46, time: "(11日)16:50—16:58", venue1: "北京航空航天大学1队", venue2: "河北科技大学2队", venue3: "沈阳工业大学3队", venue4: "东北林业大学1队" },
+    { session: 47, time: "(11日)16:58—17:06", venue1: "大连工业大学1队", venue2: "合肥工业大学2队", venue3: "山东理工大学", venue4: "湖北第二师范学院2队" },
+    { session: 48, time: "(11日)17:06—17:14", venue1: "燕山大学", venue2: "西安科技大学", venue3: "沈阳工业大学2队", venue4: "福建理工大学3队" },
+    { session: 49, time: "(11日)17:14—17:22", venue1: "福建理工大学2队", venue2: "山东科技大学3队", venue3: "山东航空学院", venue4: "大连交通大学1队" },
+    { session: 50, time: "(11日)17:22—17:30", venue1: "新疆大学1队", venue2: "东北大学秦皇岛分校2队", venue3: "大连交通大学3队", venue4: "华中科技大学2队" }
+];
+
+// 第一轮比赛数据
+const round1Data = [
+    { session: 1, time: "(12&13日)8:30—8:36", venue1: "太原工业学院2队", venue2: "上海海洋大学", venue3: "山东石油化工学院", venue4: "沈阳工业大学1队" },
+    { session: 2, time: "(12&13日)8:36—8:42", venue1: "新疆大学3队", venue2: "新疆大学2队", venue3: "浙大城市学院2队", venue4: "湖北第二师范学院3队" },
+    { session: 3, time: "(12&13日)8:42—8:48", venue1: "上海电机学院", venue2: "太原理工大学1队", venue3: "南昌大学1队", venue4: "中南大学" },
+    { session: 4, time: "(12&13日)8:48—8:54", venue1: "长江大学", venue2: "北京科技大学1队", venue3: "石河子大学", venue4: "潍坊科技学院" },
+    { session: 5, time: "(12&13日)8:54—9:00", venue1: "太原工业学院3队", venue2: "呼伦贝尔学院2队", venue3: "西安交通大学2队", venue4: "湖北工业大学2队" },
+    { session: 6, time: "(12&13日)9:00—9:06", venue1: "北京交通大学1队", venue2: "北京交通大学2队", venue3: "浙大城市学院3队", venue4: "中北大学2队" },
+    { session: 7, time: "(12&13日)9:06—9:12", venue1: "枣庄学院1队", venue2: "晋中信息学院2队", venue3: "上海大学1队", venue4: "青岛理工大学" },
+    { session: 8, time: "(12&13日)9:12—9:18", venue1: "西安交通大学1队", venue2: "东北林业大学2队", venue3: "武汉轻工大学", venue4: "河北科技大学1队" },
+    { session: 9, time: "(12&13日)9:18—9:24", venue1: "武汉大学", venue2: "北方工业大学2队", venue3: "北京航空航天大学2队", venue4: "西安交通大学3队" },
+    { session: 10, time: "(12&13日)9:24—9:30", venue1: "北京科技大学3队", venue2: "呼伦贝尔学院1队", venue3: "北京科技大学2队", venue4: "浙大城市学院1队" },
+    { session: 11, time: "(12&13日)9:30—9:36", venue1: "湖北第二师范学院1队", venue2: "太原工业学院1队", venue3: "哈尔滨工程大学", venue4: "宁波工程学院2队" },
+    { session: 12, time: "(12&13日)9:36—9:42", venue1: "新疆理工学院", venue2: "山东科技大学2队", venue3: "武汉生物工程学院", venue4: "中北大学1队" },
+    { session: 13, time: "(12&13日)9:42—9:48", venue1: "湖北工业大学1队", venue2: "苏州工学院1队", venue3: "北华航天工业学院", venue4: "大连交通大学2队" },
+    { session: 14, time: "(12&13日)9:48—9:54", venue1: "南昌大学2队", venue2: "西安文理学院", venue3: "太原理工大学3队", venue4: "中北大学3队" },
+    { session: 15, time: "(12&13日)9:54—10:00", venue1: "苏州工学院2队", venue2: "大连工业大学2队", venue3: "华中科技大学1队", venue4: "武汉科技大学3队" },
+    { session: 16, time: "(12&13日)10:00—10:06", venue1: "沈阳化工大学", venue2: "北方工业大学1队", venue3: "宁波工程学院3队", venue4: "宁波工程学院1队" },
+    { session: 17, time: "(12&13日)10:06—10:12", venue1: "武汉科技大学2队", venue2: "东北大学", venue3: "河北工程大学", venue4: "山东交通学院2队" },
+    { session: 18, time: "(12&13日)10:12—10:18", venue1: "山东交通学院1队", venue2: "山东科技大学1队", venue3: "河北科技大学2队", venue4: "福建理工大学1队" },
+    { session: 19, time: "(12&13日)10:18—10:24", venue1: "太原理工大学2队", venue2: "哈尔滨工业大学", venue3: "合肥工业大学2队", venue4: "北京航空航天大学1队" },
+    { session: 20, time: "(12&13日)10:24—10:30", venue1: "合肥工业大学1队", venue2: "东北大学秦皇岛分校1队", venue3: "西安科技大学", venue4: "大连工业大学1队" },
+    { session: 21, time: "(12&13日)10:30—11:36", venue1: "北京交通大学3队", venue2: "上海大学2队", venue3: "山东科技大学3队", venue4: "燕山大学" },
+    { session: 22, time: "(12&13日)11:36—11:42", venue1: "晋中信息学院1队", venue2: "枣庄学院2队", venue3: "东北大学秦皇岛分校2队", venue4: "福建理工大学2队" },
+    { session: 23, time: "(12&13日)11:42—11:48", venue1: "武汉科技大学1队", venue2: "沈阳工业大学3队", venue3: "太原工业学院2队", venue4: "新疆大学1队" },
+    { session: 24, time: "(12&13日)11:48—11:54", venue1: "东北林业大学1队", venue2: "山东理工大学", venue3: "新疆大学3队", venue4: "上海海洋大学" },
+    { session: 25, time: "(12&13日)11:54—12:00", venue1: "湖北第二师范学院2队", venue2: "沈阳工业大学2队", venue3: "上海电机学院", venue4: "新疆大学2队" },
+    { session: 26, time: "(12&13日)12:00—12:06", venue1: "福建理工大学3队", venue2: "山东航空学院", venue3: "长江大学", venue4: "太原理工大学1队" },
+    { session: 27, time: "(12&13日)12:06—12:12", venue1: "大连交通大学1队", venue2: "大连交通大学3队", venue3: "太原工业学院3队", venue4: "北京科技大学1队" },
+    { session: 28, time: "(12&13日)12:12—12:18", venue1: "华中科技大学2队", venue2: "沈阳工业大学1队", venue3: "北京交通大学1队", venue4: "呼伦贝尔学院2队" },
+    { session: 29, time: "(12&13日)12:18—12:24", venue1: "山东石油化工学院", venue2: "湖北第二师范学院3队", venue3: "枣庄学院1队", venue4: "北京交通大学2队" },
+    { session: 30, time: "(12&13日)12:24—12:30", venue1: "浙大城市学院2队", venue2: "中南大学", venue3: "西安交通大学1队", venue4: "晋中信息学院2队" },
+    { session: 31, time: "(12&13日)13:30—13:36", venue1: "南昌大学1队", venue2: "潍坊科技学院", venue3: "武汉大学", venue4: "东北林业大学2队" },
+    { session: 32, time: "(12&13日)13:36—13:42", venue1: "石河子大学", venue2: "湖北工业大学2队", venue3: "北京科技大学3队", venue4: "北方工业大学2队" },
+    { session: 33, time: "(12&13日)13:42—13:48", venue1: "西安交通大学2队", venue2: "中北大学2队", venue3: "湖北第二师范学院1队", venue4: "呼伦贝尔学院1队" },
+    { session: 34, time: "(12&13日)13:48—13:54", venue1: "浙大城市学院3队", venue2: "青岛理工大学", venue3: "新疆理工学院", venue4: "太原工业学院1队" },
+    { session: 35, time: "(12&13日)13:54—14:00", venue1: "上海大学1队", venue2: "河北科技大学1队", venue3: "湖北工业大学1队", venue4: "山东科技大学2队" },
+    { session: 36, time: "(12&13日)14:00—14:06", venue1: "武汉轻工大学", venue2: "西安交通大学3队", venue3: "南昌大学2队", venue4: "苏州工学院1队" },
+    { session: 37, time: "(12&13日)14:06—14:12", venue1: "北京航空航天大学2队", venue2: "浙大城市学院1队", venue3: "苏州工学院2队", venue4: "西安文理学院" },
+    { session: 38, time: "(12&13日)14:12—14:18", venue1: "北京科技大学2队", venue2: "宁波工程学院2队", venue3: "沈阳化工大学", venue4: "大连工业大学2队" },
+    { session: 39, time: "(12&13日)14:18—14:24", venue1: "哈尔滨工程大学", venue2: "中北大学1队", venue3: "武汉科技大学2队", venue4: "北方工业大学1队" },
+    { session: 40, time: "(12&13日)14:24—14:30", venue1: "武汉生物工程学院", venue2: "大连交通大学2队", venue3: "山东交通学院1队", venue4: "东北大学" },
+    { session: 41, time: "(12&13日)14:30—14:36", venue1: "北华航天工业学院", venue2: "中北大学3队", venue3: "太原理工大学2队", venue4: "山东科技大学1队" },
+    { session: 42, time: "(12&13日)14:36—14:42", venue1: "太原理工大学3队", venue2: "武汉科技大学3队", venue3: "合肥工业大学1队", venue4: "哈尔滨工业大学" },
+    { session: 43, time: "(12&13日)14:42—14:48", venue1: "华中科技大学1队", venue2: "宁波工程学院1队", venue3: "北京交通大学3队", venue4: "东北大学秦皇岛分校1队" },
+    { session: 44, time: "(12&13日)14:48—14:54", venue1: "宁波工程学院3队", venue2: "山东交通学院2队", venue3: "晋中信息学院1队", venue4: "上海大学2队" },
+    { session: 45, time: "(12&13日)14:54—15:00", venue1: "河北工程大学", venue2: "福建理工大学1队", venue3: "武汉科技大学1队", venue4: "枣庄学院2队" },
+    { session: 46, time: "(12&13日)15:00—15:06", venue1: "河北科技大学2队", venue2: "北京航空航天大学1队", venue3: "东北林业大学1队", venue4: "沈阳工业大学3队" },
+    { session: 47, time: "(12&13日)15:06—15:12", venue1: "合肥工业大学2队", venue2: "大连工业大学1队", venue3: "湖北第二师范学院2队", venue4: "山东理工大学" },
+    { session: 48, time: "(12&13日)15:12—15:18", venue1: "西安科技大学", venue2: "燕山大学", venue3: "福建理工大学3队", venue4: "沈阳工业大学2队" },
+    { session: 49, time: "(12&13日)15:18—15:24", venue1: "山东科技大学3队", venue2: "福建理工大学2队", venue3: "大连交通大学1队", venue4: "山东航空学院" },
+    { session: 50, time: "(12&13日)15:24—15:30", venue1: "东北大学秦皇岛分校2队", venue2: "新疆大学1队", venue3: "华中科技大学2队", venue4: "大连交通大学3队" }
+];
+
+        // 第二轮比赛数据（与第一轮相同，实际使用时可能需要调整）
+        const round2Data = round1Data;
+
+        let currentRound = 'trial'; // 'trial'表示试运行，'round1'表示第一轮，'round2'表示第二轮
+
+        // 获取当前轮次的数据
+        function getCurrentData() {
+            switch(currentRound) {
+                case 'trial': return trialData;
+                case 'round1': return round1Data;
+                case 'round2': return round2Data;
+                default: return trialData;
+            }
+        }
+
+        // 初始化表格
+        function renderTable(data = getCurrentData()) {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" class="no-results">没有找到匹配的结果</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                if (currentRound === 'round1') {
+                    // 第二轮显示方式：交换venue1和venue2
+                    row.innerHTML = `
+                        <td>${item.session}</td>
+                        <td>${item.time}</td>
+                        <td>${item.venue2}</td>
+                        <td>${item.venue1}</td>
+                        <td>${item.venue4}</td>
+                        <td>${item.venue3}</td>
+                    `;
+                } 
+								
+								else if (currentRound === 'round2') {
+                    // 第二轮显示方式：交换venue1和venue2
+                    row.innerHTML = `
+                        <td>${item.session}</td>
+                        <td>${item.time}</td>
+                        <td>${item.venue1}</td>
+                        <td>${item.venue2}</td>
+                        <td>${item.venue3}</td>
+                        <td>${item.venue4}</td>
+                    `;
+                } 
+								
+								else {
+                    // 试运行和第一轮显示方式：venue1和venue2不交换
+                    row.innerHTML = `
+                        <td>${item.session}</td>
+                        <td>${item.time}</td>
+                        <td>${item.venue1}</td>
+                        <td>${item.venue2}</td>
+                        <td>${item.venue3}</td>
+                        <td>${item.venue4}</td>
+                    `;
+                }
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 筛选函数
+        function filterData() {
+            const teamId = document.getElementById('team-id').value.trim().toUpperCase();
+            if (!teamId) {
+                renderTable();
+                return;
+            }
+            
+            const currentData = getCurrentData();
+            const filteredData = currentData.filter(item => 
+                item.venue1 === teamId || 
+                item.venue2 === teamId || 
+                item.venue3 === teamId || 
+                item.venue4 === teamId
+            );
+            
+            // 高亮显示匹配的队伍
+            renderTable(filteredData);
+            highlightTeam(teamId);
+        }
+
+        // 高亮显示特定队伍
+        function highlightTeam(teamId) {
+            const cells = document.querySelectorAll('#table-body td');
+            cells.forEach(cell => {
+                if (cell.textContent === teamId) {
+                    cell.classList.add('highlight');
+                }
+            });
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('team-id').value = '';
+            renderTable();
+        }
+
+        // 切换轮次
+        function switchRound(round) {
+            currentRound = round;
+            // 更新按钮状态
+            document.getElementById('trial-btn').classList.toggle('active', round === 'trial');
+            document.getElementById('round1-btn').classList.toggle('active', round === 'round1');
+            document.getElementById('round2-btn').classList.toggle('active', round === 'round2');
+            
+            // 重新渲染表格
+            const teamId = document.getElementById('team-id').value.trim().toUpperCase();
+            if (teamId) {
+                filterData();
+            } else {
+                renderTable();
+            }
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable();
+            
+            document.getElementById('filter-btn').addEventListener('click', filterData);
+            document.getElementById('reset-btn').addEventListener('click', resetFilters);
+            document.getElementById('trial-btn').addEventListener('click', () => switchRound('trial'));
+            document.getElementById('round1-btn').addEventListener('click', () => switchRound('round1'));
+            document.getElementById('round2-btn').addEventListener('click', () => switchRound('round2'));
+            
+            // 按回车键也可以触发筛选
+            document.getElementById('team-id').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    filterData();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROBOCON2025机器人排球比赛</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: right;
+            color: #666;
+            margin-bottom: 20px;
+            margin: -15px 15% 20px 0; /* 上 右 下 左 */
+            font-style: italic;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            align-items: flex-end;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 36px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .highlight {
+            background-color: #ffff99;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        .round-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .round-btn {
+            padding: 8px 20px;
+            margin: 0 5px;
+            background-color: #e7e7e7;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .round-btn.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>ROBOCON2025机器人排球比赛</h1>
+    
+    <div class="subtitle">—— 祝大家旗开得胜，不留一丝遗憾 (by 游任有鱼)</div>	
+    
+    <div class="round-toggle">
+        <button id="trial-btn" class="round-btn active">试运行</button>
+        <button id="qualifying-btn" class="round-btn">预选赛</button>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="team-id">参赛队编号:</label>
+            <input type="text" id="team-id" placeholder="例如: V01">
+        </div>
+        
+        <button id="filter-btn">筛选</button>
+        <button id="reset-btn">重置</button>
+    </div>
+    
+    <div id="table-container">
+        <table id="schedule-table">
+            <thead>
+                <tr>
+                    <th>场次</th>
+                    <th>时间</th>
+                    <th>参赛队比赛编号</th>
+                    <th>场次</th>
+                    <th>时间</th>
+                    <th>参赛队比赛编号</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- 数据将通过JavaScript动态加载 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 试运行比赛数据（按照第一张图片内容）
+        const trialData = [
+    { session: 1, time: "(11日)8:30—8:42", team1: "大连交通大学2队", session2: 2, time2: "8:42—8:54", team2: "太原工业学院" },
+    { session: 3, time: "(11日)8:54—9:06", team1: "北京邮电大学", session2: 4, time2: "9:06—9:18", team2: "呼伦贝尔学院" },
+    { session: 5, time: "(11日)9:18—9:30", team1: "东北大学秦皇岛分校1队", session2: 6, time2: "9:30—9:42", team2: "南昌大学" },
+    { session: 7, time: "(11日)9:42—9:54", team1: "大连工业大学", session2: 8, time2: "9:54—10:06", team2: "湖北第二师范学院1队" },
+    { session: 9, time: "(11日)10:06—10:18", team1: "宁波工程学院2队", session2: 10, time2: "10:18—10:30", team2: "山东科技大学" },
+    { session: 11, time: "(11日)10:30—10:42", team1: "东北大学", session2: 12, time2: "10:42—10:54", team2: "湖北第二师范学院2队" },
+    { session: 13, time: "(11日)10:54—11:06", team1: "福建理工大学", session2: 14, time2: "11:06—11:18", team2: "大连交通大学1队" },
+    { session: 15, time: "(11日)11:18—11:30", team1: "河北工程技术学院", session2: 16, time2: "11:30—11:42", team2: "中北大学" },
+    { session: 17, time: "(11日)11:42—11:54", team1: "宁波工程学院1队", session2: 18, time2: "11:54—12:06", team2: "河北科技大学" },
+    { session: 19, time: "(11日)12:06—12:18", team1: "沈阳工业大学1队", session2: 20, time2: "12:18—12:30", team2: "东北大学秦皇岛分校2队" },
+    { session: 21, time: "(11日)13:30—13:42", team1: "南通理工学院", session2: 22, time2: "13:42—13:54", team2: "沈阳工业大学2队" },
+    { session: 23, time: "(11日)13:54—14:06", team1: "武汉生物工程学院", session2: 24, time2: "14:06—14:18", team2: "西安交通大学" },
+    { session: 25, time: "(11日)14:18—14:30", team1: "山东理工大学", session2: "", time2: "", team2: "" }
+];
+
+        // 预选赛比赛数据（按照第二张图片内容）
+      const qualifyingData = [
+    { session: 1, time: "(12日&13日)8:00—8:06", team1: "大连交通大学2队", session2: 2, time2: "8:06—8:12", team2: "太原工业学院" },
+    { session: 3, time: "(12日&13日)8:12—8:18", team1: "北京邮电大学", session2: 4, time2: "8:18—8:24", team2: "呼伦贝尔学院" },
+    { session: 5, time: "(12日&13日)8:24—8:30", team1: "东北大学秦皇岛分校1队", session2: 6, time2: "8:30—8:36", team2: "南昌大学" },
+    { session: 7, time: "(12日&13日)8:36—8:42", team1: "大连工业大学", session2: 8, time2: "8:42—8:48", team2: "湖北第二师范学院1队" },
+    { session: 9, time: "(12日&13日)8:48—8:54", team1: "宁波工程学院2队", session2: 10, time2: "8:54—9:00", team2: "山东科技大学" },
+    { session: 11, time: "(12日&13日)9:00—9:06", team1: "东北大学", session2: 12, time2: "9:06—9:12", team2: "湖北第二师范学院2队" },
+    { session: 13, time: "(12日&13日)9:12—9:18", team1: "福建理工大学", session2: 14, time2: "9:18—9:24", team2: "大连交通大学1队" },
+    { session: 15, time: "(12日&13日)9:24—9:30", team1: "河北工程技术学院", session2: 16, time2: "9:30—9:36", team2: "中北大学" },
+    { session: 17, time: "(12日&13日)9:36—9:42", team1: "宁波工程学院1队", session2: 18, time2: "9:42—9:48", team2: "河北科技大学" },
+    { session: 19, time: "(12日&13日)9:48—9:54", team1: "沈阳工业大学1队", session2: 20, time2: "9:54—10:00", team2: "东北大学秦皇岛分校2队" },
+    { session: 21, time: "(12日&13日)10:00—10:06", team1: "南通理工学院", session2: 22, time2: "10:06—10:12", team2: "沈阳工业大学2队" },
+    { session: 23, time: "(12日&13日)10:12—10:18", team1: "武汉生物工程学院", session2: 24, time2: "10:18—10:24", team2: "西安交通大学" },
+    { session: 25, time: "(12日&13日)10:24—10:30", team1: "山东理工大学", session2: 26, time2: "10:30—10:36", team2: "大连交通大学2队" },
+    { session: 27, time: "(12日&13日)10:36—10:42", team1: "太原工业学院", session2: 28, time2: "10:42—10:48", team2: "北京邮电大学" },
+    { session: 29, time: "(12日&13日)10:48—10:54", team1: "呼伦贝尔学院", session2: 30, time2: "10:54—11:00", team2: "东北大学秦皇岛分校1队" },
+    { session: 31, time: "(12日&13日)11:00—11:06", team1: "南昌大学", session2: 32, time2: "11:06—11:12", team2: "大连工业大学" },
+    { session: 33, time: "(12日&13日)11:12—11:18", team1: "湖北第二师范学院1队", session2: 34, time2: "11:18—11:24", team2: "宁波工程学院2队" },
+    { session: 35, time: "(12日&13日)11:24—11:30", team1: "山东科技大学", session2: 36, time2: "11:30—11:36", team2: "东北大学" },
+    { session: 37, time: "(12日&13日)11:36—11:42", team1: "湖北第二师范学院2队", session2: 38, time2: "11:42—11:48", team2: "福建理工大学" },
+    { session: 39, time: "(12日&13日)11:48—11:54", team1: "大连交通大学1队", session2: 40, time2: "11:54—12:00", team2: "河北工程技术学院" },
+    { session: 41, time: "(12日&13日)12:00—12:06", team1: "中北大学", session2: 42, time2: "12:06—12:12", team2: "宁波工程学院1队" },
+    { session: 43, time: "(12日&13日)12:12—12:18", team1: "河北科技大学", session2: 44, time2: "12:18—12:24", team2: "沈阳工业大学1队" },
+    { session: 45, time: "(12日&13日)12:24—12:30", team1: "东北大学秦皇岛分校2队", session2: 46, time2: "13:30—13:36", team2: "南通理工学院" },
+    { session: 47, time: "(12日&13日)13:36—13:42", team1: "沈阳工业大学2队", session2: 48, time2: "13:42—13:48", team2: "武汉生物工程学院" },
+    { session: 49, time: "(12日&13日)13:48—13:54", team1: "西安交通大学", session2: 50, time2: "13:54—14:00", team2: "山东理工大学" }
+];
+
+        let currentRound = 'trial'; // 'trial'表示试运行，'qualifying'表示预选赛
+
+        // 获取当前轮次的数据
+        function getCurrentData() {
+            switch(currentRound) {
+                case 'trial': return trialData;
+                case 'qualifying': return qualifyingData;
+                default: return trialData;
+            }
+        }
+
+        // 初始化表格
+        function renderTable(data = getCurrentData()) {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" class="no-results">没有找到匹配的结果</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.session}</td>
+                    <td>${item.time}</td>
+                    <td>${item.team1}</td>
+                    <td>${item.session2}</td>
+                    <td>${item.time2}</td>
+                    <td>${item.team2}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 筛选函数
+        function filterData() {
+            const teamId = document.getElementById('team-id').value.trim().toUpperCase();
+            if (!teamId) {
+                renderTable();
+                return;
+            }
+            
+            const currentData = getCurrentData();
+            const filteredData = currentData.filter(item => 
+                item.team1 === teamId || 
+                item.team2 === teamId
+            );
+            
+            // 高亮显示匹配的队伍
+            renderTable(filteredData);
+            highlightTeam(teamId);
+        }
+
+        // 高亮显示特定队伍
+        function highlightTeam(teamId) {
+            const cells = document.querySelectorAll('#table-body td');
+            cells.forEach(cell => {
+                if (cell.textContent === teamId) {
+                    cell.classList.add('highlight');
+                }
+            });
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('team-id').value = '';
+            renderTable();
+        }
+
+        // 切换轮次
+        function switchRound(round) {
+            currentRound = round;
+            // 更新按钮状态
+            document.getElementById('trial-btn').classList.toggle('active', round === 'trial');
+            document.getElementById('qualifying-btn').classList.toggle('active', round === 'qualifying');
+            
+            // 重新渲染表格
+            const teamId = document.getElementById('team-id').value.trim().toUpperCase();
+            if (teamId) {
+                filterData();
+            } else {
+                renderTable();
+            }
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable();
+            
+            document.getElementById('filter-btn').addEventListener('click', filterData);
+            document.getElementById('reset-btn').addEventListener('click', resetFilters);
+            document.getElementById('trial-btn').addEventListener('click', () => switchRound('trial'));
+            document.getElementById('qualifying-btn').addEventListener('click', () => switchRound('qualifying'));
+            
+            // 按回车键也可以触发筛选
+            document.getElementById('team-id').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    filterData();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
